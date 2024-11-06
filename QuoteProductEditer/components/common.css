@@ -1,0 +1,29 @@
+.df{
+    display: flex;
+    align-items: center;
+}
+.gp{
+    gap:20px;
+}
+.sp{
+    justify-content: space-between;
+}
+
+.fr{
+    float: right;
+}
+.mt-15{
+    margin-top: 15px;
+}
+.mt-34{
+    margin-top: 34px;
+}
+.mb-15{
+    margin-bottom: 15px;
+}
+
+.dfc{
+    display: flex;
+    flex-direction: column;
+    
+}
