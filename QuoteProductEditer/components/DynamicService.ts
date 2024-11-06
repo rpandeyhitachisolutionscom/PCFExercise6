@@ -109,7 +109,6 @@ export const updateData = async (clientOrgURL: string, entitySetName: string, id
         });
 
         if (response.ok) {
-            alert("uploaded successFully");
             const location = response.headers.get("OData-EntityId");
             let quoteId = null;
 

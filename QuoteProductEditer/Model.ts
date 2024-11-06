@@ -7,4 +7,7 @@ export interface IProduct {
     UOM: string;
     Quantity: number;
     isSelected: boolean;
+    isValidProduct:boolean;
+    isUploaded:number;
+    Message:string;
 }

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from "react";
 import { IInputs } from "../generated/ManifestTypes";
-import { Checkbox, DetailsList, FontWeights, getTheme, IColumn, Icon, mergeStyleSets, MessageBar, Modal, PrimaryButton, SelectionMode } from "@fluentui/react";
+import { Checkbox, DetailsList, FontWeights, getTheme, IColumn, Icon, mergeStyleSets, MessageBar, Modal, PrimaryButton, SelectionMode, TooltipHost } from "@fluentui/react";
 import { useEffect, useState } from "react";
 import { getData } from "./DynamicService";
 import { PaginationComponent } from "./PaginationComponent";
@@ -9,7 +9,8 @@ import '../central.css';
 import { EditPriceDialogComponent } from "./EditPriceDialogComponent";
 import './common.css';
 import { updateData } from './DynamicService';
-import {IProduct} from '../Model';
+import { IProduct } from '../Model';
+import { ConfirmationDialog, Loader } from "./CommonComponents";
 export interface QuoteProductsEditerComponentProps {
     label: string;
     onChanges: (newValue: string | undefined) => void;
@@ -72,8 +73,13 @@ export const QuoteProductsEditerComponent = React.memo((props: QuoteProductsEdit
     const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
     const openConfirmDialog = (): any => setIsConfirmDialogOpen(true);
     const closeConfirmDialog = (): any => setIsConfirmDialogOpen(false);
+    const [isConfirmUpdateOpen, setIsConfirmUpdateOpen] = useState(false);
+    const openConfirmUpdate = (): any => setIsConfirmUpdateOpen(true);
+    const closeConfirmUpdate = (): any => setIsConfirmUpdateOpen(false);
     const [isModified, setIsModified] = useState(false);
     const [isRecordSelected, setIsRecordSelected] = useState(true);
+    const [isUploading, setIsUploading] = useState(false);
+    const [isUploded, setIsUploded] = useState(false);
     useEffect(() => {
         QuoteDetailsData();
     }, []);
@@ -91,7 +97,10 @@ export const QuoteProductsEditerComponent = React.memo((props: QuoteProductsEdit
                 ExtendedAmount: item.extendedamount,
                 UOM: item.uomid.name,
                 Quantity: item.quantity,
-                isSelected: false
+                isSelected: false,
+                isValidProduct: true,
+                isUploaded: 0,
+                Message: 'This is from system data base'
             })
 
         })
@@ -105,21 +114,33 @@ export const QuoteProductsEditerComponent = React.memo((props: QuoteProductsEdit
     }
     const columns: IColumn[] = [
         {
-            key: 'column1', name: '', fieldName: 'isSelected', minWidth: 50, maxWidth: 200, isMultiline: false,
+            key: 'column1', name: '', fieldName: 'isSelected', minWidth: 10, maxWidth: 100, isMultiline: false,
             onRender: (item: any) => (
 
                 <Checkbox
-                    checked={item.Isselected} // You can manage checked state if needed
+                    checked={item.isSelected} // You can manage checked state if needed
                     onChange={() => dataUpdateAfterSelection(item)}
                 />
             ),
         },
-        { key: 'column2', name: 'Product Number', fieldName: 'ProductNumber', minWidth: 100, maxWidth: 150, isMultiline: false },
-        { key: 'column3', name: 'Product Name', fieldName: 'ProductName', minWidth: 100, maxWidth: 150, isMultiline: false },
-        { key: 'column4', name: 'UOM', fieldName: 'UOM', minWidth: 50, maxWidth: 150, isMultiline: false },
-        { key: 'column5', name: 'Price', fieldName: 'PricePerUnit', minWidth: 50, maxWidth: 150, isMultiline: false },
-        { key: 'column6', name: 'Quantity', fieldName: 'Quantity', minWidth: 50, maxWidth: 150, isMultiline: false },
-        { key: 'column7', name: 'Extended Amount', fieldName: 'ExtendedAmount', minWidth: 50, maxWidth: 150, isMultiline: false },
+        {
+            key: 'column2', name: '', fieldName: 'isValidProduct', minWidth: 10, maxWidth: 100, isMultiline: false,
+            onRender: (item: any) => (
+
+                <TooltipHost
+                    content={item.Message}
+                    calloutProps={{ gapSpace: 0 }}
+                >
+                    <Icon iconName="Warning" styles={{ root: { color: item.isValidProduct ? (item.isUploaded == 1 ? 'green' : 'yellow') : 'red', fontSize: 24, cursor: 'pointer' } }} />
+                </TooltipHost>
+            ),
+        },
+        { key: 'column3', name: 'Product Number', fieldName: 'ProductNumber', minWidth: 100, maxWidth: 150, isMultiline: false },
+        { key: 'column4', name: 'Product Name', fieldName: 'ProductName', minWidth: 100, maxWidth: 150, isMultiline: false },
+        { key: 'column5', name: 'UOM', fieldName: 'UOM', minWidth: 50, maxWidth: 150, isMultiline: false },
+        { key: 'column6', name: 'Price', fieldName: 'PricePerUnit', minWidth: 50, maxWidth: 150, isMultiline: false },
+        { key: 'column7', name: 'Quantity', fieldName: 'Quantity', minWidth: 50, maxWidth: 150, isMultiline: false },
+        { key: 'column8', name: 'Extended Amount', fieldName: 'ExtendedAmount', minWidth: 50, maxWidth: 150, isMultiline: false },
     ];
 
     const dataUpdateAfterSelection = (item: any) => {
@@ -131,6 +152,10 @@ export const QuoteProductsEditerComponent = React.memo((props: QuoteProductsEdit
             return d;
         });
         setData(updatedData);
+        const total = Math.ceil(updatedData.length / pageSize);
+        setTotalPages(total);
+        const paginated = updatedData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+        setPaginatedItems(paginated);
     };
 
     const handleCurrentPage = (page: any) => {
@@ -140,6 +165,7 @@ export const QuoteProductsEditerComponent = React.memo((props: QuoteProductsEdit
         const paginated = data.slice((page - 1) * pageSize, page * pageSize);
         setPaginatedItems(paginated);
     }
+
     const handlePageSizeChange = (pageSize: any) => {
         setPageSize(pageSize);
         setCurrentPage(1);
@@ -148,26 +174,30 @@ export const QuoteProductsEditerComponent = React.memo((props: QuoteProductsEdit
         const paginated = data.slice((currentPage - 1) * pageSize, currentPage * pageSize);
         setPaginatedItems(paginated);
     }
+
     const inputRecord = (value: any, isApproach: any, isPrice: any) => {
         const parsedValue = Number(value);
-
         if (isNaN(parsedValue)) {
             console.error('Invalid value provided');
             return;
         }
-
         const updatedData = data.map((d: any) => {
             if (d.isSelected) {
                 let price = d.PricePerUnit || 0;
-
+                let isValid = d.isValidProduct;
+                let Message = d.Message;
                 if (isPrice === 'price') {
                     price = isApproach ? price + parsedValue : price - parsedValue;
+                    isValid = price<10?false:true;
+                    Message = isValid?Message:'Price less Than 10';
                 } else {
                     const percentageChange = (price * parsedValue) / 100;
                     price = isApproach ? price + percentageChange : price - percentageChange;
+                    isValid = price<10?false:true;
+                    Message = isValid?Message:'Price less Than 10';
                 }
-
-                return { ...d, PricePerUnit: price };
+                
+                return { ...d, PricePerUnit: price,isValidProduct:isValid,Message:Message };
             }
 
             return d;
@@ -180,6 +210,7 @@ export const QuoteProductsEditerComponent = React.memo((props: QuoteProductsEdit
         const paginated = updatedData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
         setPaginatedItems(paginated);
     }
+
     const modifyProducts = () => {
         setIsRecordSelected(true);
         const selectedRecords = data.filter((d: any) => d.isSelected);
@@ -190,19 +221,44 @@ export const QuoteProductsEditerComponent = React.memo((props: QuoteProductsEdit
             setIsRecordSelected(false);
         }
     }
+
     const updateRecords = async () => {
+        setIsUploading(true);
         for (const item of data) {
             const record: any = {};
             record.ispriceoverridden = true;
             record.priceperunit = item.PricePerUnit;
             record["quoteid@odata.bind"] = `/quotes(${props.quoteid})`
-            const updatedId = await updateData(props.clientUrl,'quotedetails',item.QuoteDetailId,record);
+            const updatedId = await updateData(props.clientUrl, 'quotedetails', item.QuoteDetailId, record);
+            if (!updatedId) { item.isUploaded = 0; item.isValidProduct = false; item.Message = 'Internal Error '; continue; }
+            if (updatedId) { item.isUploaded = 1;item.isValidProduct = true; item.Message = 'Uploaded Successfull '; continue; }
             console.log(updatedId);
-       }
+        }
+        const total = Math.ceil(data.length / pageSize);
+        setTotalPages(total);
+        const paginated = data.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+        setPaginatedItems(paginated);
+        setIsUploading(false);
+        openConfirmUpdate();
+        
+    }
+    const afterResponse = () => {
+        //window.location.reload();
+        setIsUploded(true);
+        setIsModified(false);
+    }
+    const closeAndReload = () => {
+        if (isUploded) {
+            closeDialog();
+            window.location.reload();
+        }
+        else {
+            closeDialog();
+        }
     }
     return (
         <>
-            <button onClick={openDialog}> Edit Products</button>
+            <PrimaryButton onClick={openDialog}> Edit Products</PrimaryButton>
 
             <Modal
                 isOpen={isDialogOpen}
@@ -214,7 +270,7 @@ export const QuoteProductsEditerComponent = React.memo((props: QuoteProductsEdit
                     main: {
                         selectors: {
                             ['@media (min-width: 480px)']: {
-                                // minWidth: 450,
+                                minWidth: 650,
                                 // maxWidth: '1500px',
                                 // width: '1300px',
                                 padding: '30px',
@@ -228,7 +284,7 @@ export const QuoteProductsEditerComponent = React.memo((props: QuoteProductsEdit
                     <div>
                         <h2>Edit Quote Products</h2>
                     </div>
-                    <Icon iconName="Cancel" onClick={closeDialog} style={{ cursor: 'pointer', fontSize: '24px', color: 'red', fontWeight: '600' }} />
+                    <Icon iconName="Cancel" onClick={closeAndReload} style={{ cursor: 'pointer', fontSize: '24px', color: 'red', fontWeight: '600' }} />
                 </div>
                 <div style={{ display: isRecordSelected ? 'none' : 'block' }}>
                     <MessageBar > Please Select Atleast One Record for Modify Thanks.</MessageBar>
@@ -239,25 +295,30 @@ export const QuoteProductsEditerComponent = React.memo((props: QuoteProductsEdit
                     <PrimaryButton disabled={!isModified} onClick={updateRecords}>Update Products</PrimaryButton>
                 </div>
 
+                <ConfirmationDialog isopen={isConfirmUpdateOpen} onClose={closeConfirmUpdate} afterResponse={afterResponse} />
                 <EditPriceDialogComponent isopen={isConfirmDialogOpen} onClose={closeConfirmDialog} inputRecord={inputRecord} />
-                <div style={{ display: isProducts ? 'block' : 'none' }} className="mt-34">
-                    <DetailsList
-                        items={paginatedItems}
-                        columns={columns}
-                        setKey="set"
-                        layoutMode={0}
-                        compact={true}
-                        selectionMode={SelectionMode.none}
-                    />
-                    <PaginationComponent
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        pageSize={pageSize}
-                        onPageChange={handleCurrentPage}
-                        onPageSizeChange={handlePageSizeChange}
-                    />
+                {isUploading ?
+                    <Loader /> :
 
-                </div>
+                    <div style={{ display: isProducts ? 'block' : 'none' }} className="mt-34">
+                        <DetailsList
+                            items={paginatedItems}
+                            columns={columns}
+                            setKey="set"
+                            layoutMode={0}
+                            compact={true}
+                            selectionMode={SelectionMode.none}
+                        />
+                        <PaginationComponent
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            pageSize={pageSize}
+                            onPageChange={handleCurrentPage}
+                            onPageSizeChange={handlePageSizeChange}
+                        />
+
+                    </div>
+                }
 
             </Modal>
         </>

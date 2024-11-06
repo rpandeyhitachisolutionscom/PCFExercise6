@@ -25,5 +25,18 @@
 .dfc{
     display: flex;
     flex-direction: column;
-    
+
+}
+.appl{
+    cursor: pointer;
+    font-weight: 700;
+    color: blue;
+    font-size: 16px;
+}
+
+.canl{
+    cursor: pointer;
+    font-weight: 700;
+    color: red;
+    font-size: 16px; 
 }

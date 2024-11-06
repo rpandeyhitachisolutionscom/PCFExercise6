@@ -99,7 +99,7 @@ export const EditPriceDialogComponent: React.FC<any> = ({ isopen, onClose, input
                     main: {
                         selectors: {
                             ['@media (min-width: 480px)']: {
-                                minWidth: 450,
+                                minWidth: 650,
                                 // maxWidth: '1500px',
                                 // width: '1300px',
                                 padding: '30px',
@@ -114,7 +114,7 @@ export const EditPriceDialogComponent: React.FC<any> = ({ isopen, onClose, input
                 </div>
                 <div className='dfc'>
                     <div className='type_selection mt-15 dfc'>
-                        <div className='type_button df gp fr'>
+                        <div className='type_button df gp fr sp'>
                             <ChoiceGroup
                                 selectedKey={isPrice}
                                 options={options}
@@ -133,13 +133,16 @@ export const EditPriceDialogComponent: React.FC<any> = ({ isopen, onClose, input
                                     label={isPrice == 'price' ? 'Enter Price value' : 'Enter Price Percentage'}
                                     value={value}
                                     onChange={handleChange}
+                                    style={{ width: '350px' }}
                                 />
                             </div>
                         </div>
                     </div>
-                    <div className='df gp mt-34 fr'>
-                        <p onClick={apply}>Apply Changes</p>
-                        <p onClick={cancel}> Cancel</p>
+                    <div className='mt-34'>
+                        <div className=' df gp fr'>
+                        <p onClick={apply} className='appl'>Apply Changes</p>
+                        <p onClick={cancel} className='canl'> Cancel</p>
+                        </div>
                     </div>
                 </div>
 
