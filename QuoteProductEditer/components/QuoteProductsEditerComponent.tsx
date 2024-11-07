@@ -3,13 +3,13 @@ import * as React from "react";
 import { IInputs } from "../generated/ManifestTypes";
 import { Checkbox, DetailsList, FontWeights, getTheme, IColumn, Icon, mergeStyleSets, MessageBar, Modal, PrimaryButton, SelectionMode, TooltipHost } from "@fluentui/react";
 import { useEffect, useState } from "react";
-import { getData } from "./DynamicService";
+import { getData } from "../Data/DynamicService";
 import { PaginationComponent } from "./PaginationComponent";
-import '../central.css';
+import '../css/common.css';
 import { EditPriceDialogComponent } from "./EditPriceDialogComponent";
-import './common.css';
-import { updateData } from './DynamicService';
-import { IProduct } from '../Model';
+// import '../css/central.css';
+import { updateData } from '../Data/DynamicService';
+import { IProduct } from '../Model/Model';
 import { ConfirmationDialog, Loader } from "./CommonComponents";
 export interface QuoteProductsEditerComponentProps {
     label: string;
@@ -100,7 +100,7 @@ export const QuoteProductsEditerComponent = React.memo((props: QuoteProductsEdit
                 isSelected: false,
                 isValidProduct: true,
                 isUploaded: 0,
-                Message: 'This is from system data base'
+                Message: 'Loaded SuccessFully'
             })
 
         })
@@ -114,7 +114,7 @@ export const QuoteProductsEditerComponent = React.memo((props: QuoteProductsEdit
     }
     const columns: IColumn[] = [
         {
-            key: 'column1', name: '', fieldName: 'isSelected', minWidth: 10, maxWidth: 100, isMultiline: false,
+            key: 'column1', name: '', fieldName: 'isSelected', minWidth: 10, maxWidth: 20, isMultiline: false,
             onRender: (item: any) => (
 
                 <Checkbox
@@ -124,23 +124,24 @@ export const QuoteProductsEditerComponent = React.memo((props: QuoteProductsEdit
             ),
         },
         {
-            key: 'column2', name: '', fieldName: 'isValidProduct', minWidth: 10, maxWidth: 100, isMultiline: false,
+            key: 'column2', name: '', fieldName: 'isValidProduct', minWidth: 10, maxWidth: 20, isMultiline: false,
             onRender: (item: any) => (
 
                 <TooltipHost
                     content={item.Message}
                     calloutProps={{ gapSpace: 0 }}
+
                 >
                     <Icon iconName="Warning" styles={{ root: { color: item.isValidProduct ? (item.isUploaded == 1 ? 'green' : 'yellow') : 'red', fontSize: 24, cursor: 'pointer' } }} />
                 </TooltipHost>
             ),
         },
-        { key: 'column3', name: 'Product Number', fieldName: 'ProductNumber', minWidth: 100, maxWidth: 150, isMultiline: false },
-        { key: 'column4', name: 'Product Name', fieldName: 'ProductName', minWidth: 100, maxWidth: 150, isMultiline: false },
-        { key: 'column5', name: 'UOM', fieldName: 'UOM', minWidth: 50, maxWidth: 150, isMultiline: false },
-        { key: 'column6', name: 'Price', fieldName: 'PricePerUnit', minWidth: 50, maxWidth: 150, isMultiline: false },
-        { key: 'column7', name: 'Quantity', fieldName: 'Quantity', minWidth: 50, maxWidth: 150, isMultiline: false },
-        { key: 'column8', name: 'Extended Amount', fieldName: 'ExtendedAmount', minWidth: 50, maxWidth: 150, isMultiline: false },
+        { key: 'column3', name: 'Product Number', fieldName: 'ProductNumber', minWidth: 100, maxWidth: 170, isMultiline: false },
+        { key: 'column4', name: 'Product Name', fieldName: 'ProductName', minWidth: 100, maxWidth: 170, isMultiline: false },
+        { key: 'column5', name: 'UOM', fieldName: 'UOM', minWidth: 50, maxWidth: 170, isMultiline: false },
+        { key: 'column6', name: 'Price', fieldName: 'PricePerUnit', minWidth: 50, maxWidth: 170, isMultiline: false },
+        { key: 'column7', name: 'Quantity', fieldName: 'Quantity', minWidth: 50, maxWidth: 170, isMultiline: false },
+        { key: 'column8', name: 'Extended Amount', fieldName: 'ExtendedAmount', minWidth: 50, maxWidth: 170, isMultiline: false },
     ];
 
     const dataUpdateAfterSelection = (item: any) => {
@@ -188,16 +189,16 @@ export const QuoteProductsEditerComponent = React.memo((props: QuoteProductsEdit
                 let Message = d.Message;
                 if (isPrice === 'price') {
                     price = isApproach ? price + parsedValue : price - parsedValue;
-                    isValid = price<10?false:true;
-                    Message = isValid?Message:'Price less Than 10';
+                    isValid = price < 10 ? false : true;
+                    Message = isValid ? 'Loaded Successfully' : 'Price less Than 10';
                 } else {
                     const percentageChange = (price * parsedValue) / 100;
                     price = isApproach ? price + percentageChange : price - percentageChange;
-                    isValid = price<10?false:true;
-                    Message = isValid?Message:'Price less Than 10';
+                    isValid = price < 10 ? false : true;
+                    Message = isValid ? 'Loaded Successfully' : 'Price less Than 10';
                 }
-                
-                return { ...d, PricePerUnit: price,isValidProduct:isValid,Message:Message };
+
+                return { ...d, PricePerUnit: price, isValidProduct: isValid, Message: Message };
             }
 
             return d;
@@ -225,14 +226,16 @@ export const QuoteProductsEditerComponent = React.memo((props: QuoteProductsEdit
     const updateRecords = async () => {
         setIsUploading(true);
         for (const item of data) {
-            const record: any = {};
-            record.ispriceoverridden = true;
-            record.priceperunit = item.PricePerUnit;
-            record["quoteid@odata.bind"] = `/quotes(${props.quoteid})`
-            const updatedId = await updateData(props.clientUrl, 'quotedetails', item.QuoteDetailId, record);
-            if (!updatedId) { item.isUploaded = 0; item.isValidProduct = false; item.Message = 'Internal Error '; continue; }
-            if (updatedId) { item.isUploaded = 1;item.isValidProduct = true; item.Message = 'Uploaded Successfull '; continue; }
-            console.log(updatedId);
+            if (item.isSelected && item.isValidProduct) {
+                const record: any = {};
+                record.ispriceoverridden = true;
+                record.priceperunit = item.PricePerUnit;
+                record["quoteid@odata.bind"] = `/quotes(${props.quoteid})`
+                const updatedId = await updateData(props.clientUrl, 'quotedetails', item.QuoteDetailId, record);
+                if (!updatedId) { item.isUploaded = 0; item.isValidProduct = false; item.Message = 'Internal Error '; continue; }
+                if (updatedId) { item.isUploaded = 1; item.isValidProduct = true; item.Message = 'Updated Successfull '; continue; }
+                console.log(updatedId);
+            }
         }
         const total = Math.ceil(data.length / pageSize);
         setTotalPages(total);
@@ -240,13 +243,15 @@ export const QuoteProductsEditerComponent = React.memo((props: QuoteProductsEdit
         setPaginatedItems(paginated);
         setIsUploading(false);
         openConfirmUpdate();
-        
+
     }
+
     const afterResponse = () => {
         //window.location.reload();
         setIsUploded(true);
         setIsModified(false);
     }
+
     const closeAndReload = () => {
         if (isUploded) {
             closeDialog();
@@ -287,7 +292,7 @@ export const QuoteProductsEditerComponent = React.memo((props: QuoteProductsEdit
                     <Icon iconName="Cancel" onClick={closeAndReload} style={{ cursor: 'pointer', fontSize: '24px', color: 'red', fontWeight: '600' }} />
                 </div>
                 <div style={{ display: isRecordSelected ? 'none' : 'block' }}>
-                    <MessageBar > Please Select Atleast One Record for Modify Thanks.</MessageBar>
+                    <MessageBar > Please Select atleast One Product.</MessageBar>
                 </div>
 
                 <div className="action_button fr gp df">
@@ -308,6 +313,15 @@ export const QuoteProductsEditerComponent = React.memo((props: QuoteProductsEdit
                             layoutMode={0}
                             compact={true}
                             selectionMode={SelectionMode.none}
+                            // styles={{
+                            //     root: {
+                            //     //   backgroundColor: '#f3f3f3', // Customize the root background color
+                            //     //   borderRadius: '8px', // Rounded corners
+                            //     //   boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)', // Box shadow
+                            //       overflow:"auto"
+                            //     }
+                            //   }}
+                            className="detailList"
                         />
                         <PaginationComponent
                             currentPage={currentPage}

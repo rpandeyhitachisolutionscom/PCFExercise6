@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from 'react';
-import '../central.css';
+import '../css/common.css';
 import { Icon } from '@fluentui/react';
 export const PaginationComponent: React.FC<any> = ({ currentPage, totalPages, pageSize, onPageChange, onPageSizeChange }) => {
     const handlePageSizeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {

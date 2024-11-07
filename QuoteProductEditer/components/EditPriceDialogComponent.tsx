@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ChoiceGroup, FontWeights, getTheme, IChoiceGroupOption, mergeStyleSets, Modal, PrimaryButton, TextField, Toggle } from '@fluentui/react';
 import * as React from 'react';
-import './common.css';
+import '../css/common.css';
 const theme = getTheme();
 
 const contentStyles = mergeStyleSets({
@@ -45,7 +45,9 @@ export const EditPriceDialogComponent: React.FC<any> = ({ isopen, onClose, input
     const [isPrice, setIsprice] = React.useState('price');
     const [isApproach, setISApproach] = React.useState(true);
     const [value, setValue] = React.useState('');
-
+    React.useEffect(() => {
+        setISApproach(true);
+    }, []);
     function onChangeIncrease(ev: React.MouseEvent<HTMLElement>, checked?: boolean) {
         if (checked) {
             setISApproach(true);
@@ -76,10 +78,10 @@ export const EditPriceDialogComponent: React.FC<any> = ({ isopen, onClose, input
         onClose();
     }
     const apply = () => {
-    if(value !=''){
-        inputRecord(value,isApproach,isPrice);
-        onClose();
-    }
+        if (value != '') {
+            inputRecord(value, isApproach, isPrice);
+            onClose();
+        }
     }
     const options: IChoiceGroupOption[] = [
         { key: 'price', text: 'By Price' },
@@ -123,7 +125,13 @@ export const EditPriceDialogComponent: React.FC<any> = ({ isopen, onClose, input
                             />
                             <div className='Approach_Selection' style={{ display: (isPrice != '') ? 'block' : 'none' }}>
                                 <div className='df gp fr'>
-                                    <Toggle label="" defaultChecked onText="Increase Price" offText="Decrease Price" onChange={onChangeIncrease} />
+                                    <Toggle
+                                        label=""
+                                        defaultChecked={isApproach}
+                                        onText={isApproach ? "Increase Price" : "Increase Price (Active)"}
+                                        offText={isApproach ? "Decrease Price" : "Decrease Price (Active)"}
+                                        onChange={onChangeIncrease}
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -140,8 +148,8 @@ export const EditPriceDialogComponent: React.FC<any> = ({ isopen, onClose, input
                     </div>
                     <div className='mt-34'>
                         <div className=' df gp fr'>
-                        <p onClick={apply} className='appl'>Apply Changes</p>
-                        <p onClick={cancel} className='canl'> Cancel</p>
+                            <p onClick={apply} className='appl'>Apply Changes</p>
+                            <p onClick={cancel} className='canl'> Cancel</p>
                         </div>
                     </div>
                 </div>

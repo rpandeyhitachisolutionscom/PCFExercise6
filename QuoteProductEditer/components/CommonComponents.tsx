@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Dialog, DialogFooter, DialogType, Label, PrimaryButton, ProgressIndicator, Spinner, SpinnerSize } from "@fluentui/react";
 import * as React from "react";
-import './common.css';
+import '../css/common.css';
 
 const dialogContentProps = {
     type: DialogType.normal,
